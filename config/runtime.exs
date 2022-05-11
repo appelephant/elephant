@@ -1,8 +1,6 @@
 import Config
 
-if System.get_env("PHX_SERVER") do
-  config :elephant, ElephantWeb.Endpoint, server: true
-end
+config :elephant, ElephantWeb.Endpoint, server: true
 
 if config_env() == :prod do
   database_url =
