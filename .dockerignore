@@ -1,0 +1,17 @@
+# Elixir folders
+/_build/
+/deps/
+/.elixir_ls/
+
+# Git files
+/**/.git
+/.github/
+
+# Local dev env files
+/.nix-mix/
+/.nix-hex/
+/.direnv/
+/.postgres/
+
+# local config
+/config/local.secret.exs

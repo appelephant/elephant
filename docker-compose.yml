@@ -1,0 +1,56 @@
+version: "3.8"
+
+services:
+  elephant:
+    stdin_open: true
+    tty: true
+    build:
+      context: .
+      args:
+        MIX_ENV: dev
+    container_name: elephantapp
+    command: mix phx.server
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+      - "4001:4001"
+    volumes:
+      - .:/elephant
+    depends_on:
+      - db
+    networks:
+      - appelephant
+    env_file:
+      - .env
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "10"
+
+  db:
+    image: postgres:13.5
+    container_name: elephant_db
+    environment:
+      POSTGRES_PASSWORD: elephant
+      POSTGRES_USER: elephant
+      POSTGRES_DB: elephant_test
+    ports:
+      - "5432:5432"
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U elephant"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - appelephant
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "10"
+
+networks:
+  appelephant:
+    name: appelephant
