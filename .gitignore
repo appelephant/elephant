@@ -40,3 +40,6 @@ assets/js/_hooks/
 /.direnv/
 /.nix-*/
 /.postgres/
+
+# Ignore nix final build files
+result

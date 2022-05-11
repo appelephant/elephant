@@ -15,25 +15,64 @@
 
       supportedSystems = [ "x86_64-linux" ];
 
-      outputsBuilder = channels: {
-        packages = { inherit (channels.nixpkgs) package-from-overlays; };
-        devShell = channels.unstable.mkShell {
-          name = "appelephant";
-          buildInputs = with channels.unstable; [
-            gnumake
-            gcc
-            readline
-            openssl
-            zlib
-            libxml2
-            curl
-            libiconv
-            elixir
-            beamPackages.rebar3
-            glibcLocales
-            postgresql
-          ] ++ pkgs.lib.optional stdenv.isLinux [
-            inotify-tools
+      outputsBuilder = channels: with channels.unstable; {
+        packages =
+          let
+            elephantDeps = import ./deps.nix { inherit lib beamPackages; };
+
+            elephant = beamPackages.mixRelease {
+              pname = "elephant-dev";
+              src = ./.;
+              version = "0.1.0";
+              mixEnv = "dev";
+              mixNixDeps = elephantDeps;
+            };
+          in {
+            inherit (channels.nixpkgs) package-from-overlays;
+
+            inherit elephant;
+
+            ociImage =
+              let
+                alpine-elixir = dockerTools.pullImage {
+                  imageName = "bitwalker/alpine-elixir";
+                  imageDigest = "sha256:60b36117e173f5d0fb5dbc13fb1b49fc934f123fa7d56fc0ccc644c54f28bccb";
+                  sha256 = "0k2n0xzhnbj0vzxzk3a9773qscrqg8j0ha9swm48vsvgwbaah5p5";
+                };
+              in
+              dockerTools.buildImage {
+                name = "elephant";
+                tag = "latest";
+
+                fromImage = alpine-elixir;
+
+                contents = [ elixir elephant ];
+
+                config = {
+                # Cmd = [ "mix" "phx.server" ];
+                WorkingDir = "/elephant";
+              };
+            };
+          };
+
+          devShell = channels.unstable.mkShell {
+            name = "appelephant";
+            buildInputs = [
+              gnumake
+              gcc
+              readline
+              openssl
+              zlib
+              libxml2
+              curl
+              libiconv
+              elixir
+              beamPackages.rebar3
+              glibcLocales
+              postgresql
+              mix2nix
+            ] ++ pkgs.lib.optional stdenv.isLinux [
+              inotify-tools
             # observer gtk engine
             gtk-engine-murrine
           ]
@@ -55,8 +94,8 @@
             # version and supress warnings about standard
             # libraries
             export ERL_LIBS="$HEX_HOME/lib/erlang/lib"
-          '';
+            '';
+          };
         };
       };
-    };
-}
+    }
